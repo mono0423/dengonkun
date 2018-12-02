@@ -5,13 +5,27 @@ let lineClient;
 
 const Bot = {
   async handler(event) {
-    const body = JSON.parse(event.body);
+    try {
+      const body = JSON.parse(event.body);
 
-    lineClient = Bot.buildLineClient();
-    await lineClient.replyMessage(body.events[0].replyToken, {
-      type: 'text',
-      text: '残したい伝言を音声メッセージで送ってね！',
-    });
+      lineClient = Bot.buildLineClient();
+      await lineClient.replyMessage(body.events[0].replyToken, {
+        type: 'text',
+        text: '残したい伝言を音声メッセージで送ってね！',
+      });
+
+      return {
+        statusCode: 200,
+      };
+    } catch (e) {
+      console.error(JSON.stringify(e));
+      return {
+        statusCode: 500,
+        body: {
+          message: 'internal server error',
+        },
+      };
+    }
   },
 
   async buildLineClient() {
