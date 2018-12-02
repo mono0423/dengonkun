@@ -15,6 +15,7 @@ let mock;
 // 振る舞いを変えたい場合は、ケースの中で上書きする
 let stubLineClient;
 let stubS3;
+let stubDocumentClient;
 
 describe('bot', () => {
   before(() => {
@@ -28,6 +29,11 @@ describe('bot', () => {
     stubLineClient = {replyMessage() {}};
     stubS3 = {
       putObject() {
+        return {promise() {}};
+      },
+    };
+    stubDocumentClient = {
+      put() {
         return {promise() {}};
       },
     };
@@ -129,6 +135,25 @@ describe('bot', () => {
               fakeFetchAudioMessage
           );
 
+          // generateAudioFileNameメソッドをスタブ化
+          const fakeGenerateAudioFileName = sinon.fake.returns(
+              'xxxxxxxx_20180101000000000.m4a'
+          );
+          sinon.replace(
+              target.testModules,
+              'generateAudioFileName',
+              fakeGenerateAudioFileName
+          );
+
+          // DynamoDBクライアントをスタブ化
+          // ビルダーがスタブを返すようすり替える
+          const fakeDocumentClient = sinon.fake.returns(stubDocumentClient);
+          sinon.replace(
+              target.testModules,
+              'buildDocumentClient',
+              fakeDocumentClient
+          );
+
           // S3クライアントをスタブ化
           // ビルダーがスタブを返すようすり替える
           const fakeS3 = sinon.fake.returns(stubS3);
@@ -175,6 +200,25 @@ describe('bot', () => {
           const fakeS3 = sinon.fake.returns(stubS3);
           sinon.replace(target.testModules, 'buildS3', fakeS3);
 
+          // DynamoDBクライアントをスタブ化
+          // ビルダーがスタブを返すようすり替える
+          const fakeDocumentClient = sinon.fake.returns(stubDocumentClient);
+          sinon.replace(
+              target.testModules,
+              'buildDocumentClient',
+              fakeDocumentClient
+          );
+
+          // generateAudioFileNameメソッドをスタブ化
+          const fakeGenerateAudioFileName = sinon.fake.returns(
+              'xxxxxxxx_20180101000000000.m4a'
+          );
+          sinon.replace(
+              target.testModules,
+              'generateAudioFileName',
+              fakeGenerateAudioFileName
+          );
+
           // fetchAudioMessageメソッドをモック化
           mock = sinon.mock(target.testModules);
           mock
@@ -217,6 +261,25 @@ describe('bot', () => {
               fakeFetchAudioMessage
           );
 
+          // generateAudioFileNameメソッドをスタブ化
+          const fakeGenerateAudioFileName = sinon.fake.returns(
+              'xxxxxxxx_20180101000000000.m4a'
+          );
+          sinon.replace(
+              target.testModules,
+              'generateAudioFileName',
+              fakeGenerateAudioFileName
+          );
+
+          // DynamoDBクライアントをスタブ化
+          // ビルダーがスタブを返すようすり替える
+          const fakeDocumentClient = sinon.fake.returns(stubDocumentClient);
+          sinon.replace(
+              target.testModules,
+              'buildDocumentClient',
+              fakeDocumentClient
+          );
+
           // S3クライアントをモック化
           // ビルダーがスタブを返すようすり替える
           const fakeS3 = sinon.fake.returns(stubS3);
@@ -226,12 +289,76 @@ describe('bot', () => {
             ACL: 'public-read',
             Body: Buffer.from('0123456789'),
             Bucket: process.env.AUDIO_BUCKET,
-            Key: 'test.m4a',
+            Key: 'xxxxxxxx_20180101000000000.m4a',
           };
           mock = sinon.mock(stubS3);
           mock
               .expects('putObject')
               .withArgs(expectedArgs)
+              .once()
+              .returns({promise() {}});
+
+          const actual = await target.handler({
+            body: constants.BODY_AUDIO_MESSAGE,
+          });
+
+          assert.deepEqual(constants.EXPECT_SUCCESS, actual);
+          mock.verify();
+        });
+
+        it('DBにレコードを挿入する', async () => {
+          // LINE Clientをスタブ化
+          // ビルダーがスタブを返すようすり替える
+          stubLineClient = {
+            replyMessage() {},
+            getMessageContent() {
+              return {then() {}};
+            },
+          };
+          const fakeBuildLineClient = sinon.fake.returns(stubLineClient);
+          sinon.replace(
+              target.testModules,
+              'buildLineClient',
+              fakeBuildLineClient
+          );
+
+          // fetchAudioMessageメソッドをスタブ化
+          const fakeFetchAudioMessage = sinon.fake.returns(
+              Buffer.from('0123456789')
+          );
+          sinon.replace(
+              target.testModules,
+              'fetchAudioMessage',
+              fakeFetchAudioMessage
+          );
+
+          // generateAudioFileNameメソッドをスタブ化
+          const fakeGenerateAudioFileName = sinon.fake.returns(
+              'xxxxxxxx_20180101000000000.m4a'
+          );
+          sinon.replace(
+              target.testModules,
+              'generateAudioFileName',
+              fakeGenerateAudioFileName
+          );
+
+          // S3クライアントをスタブ化
+          // ビルダーがスタブを返すようすり替える
+          const fakeS3 = sinon.fake.returns(stubS3);
+          sinon.replace(target.testModules, 'buildS3', fakeS3);
+
+          // DynamoDBクライアントをモック化
+          // ビルダーがスタブを返すようすり替える
+          const fakeDocumentClient = sinon.fake.returns(stubDocumentClient);
+          sinon.replace(
+              target.testModules,
+              'buildDocumentClient',
+              fakeDocumentClient
+          );
+
+          mock = sinon.mock(stubDocumentClient);
+          mock
+              .expects('put')
               .once()
               .returns({promise() {}});
 
