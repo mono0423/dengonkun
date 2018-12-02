@@ -10,10 +10,12 @@ let lineClient;
 const Bot = {
   async handler(event) {
     try {
+      logger.info('[START]handler');
       logger.debug(JSON.stringify(event));
       const body = JSON.parse(event.body);
 
-      if (body.events[0].replyToken === '00000000000000000000000000000000') {
+      const replyToken = body.events[0].replyToken;
+      if (replyToken === '00000000000000000000000000000000') {
         logger.info('接続確認のため、成功で返却する');
         return {
           statusCode: 200,
@@ -21,32 +23,36 @@ const Bot = {
       }
 
       lineClient = Bot.buildLineClient();
-      await lineClient.replyMessage(body.events[0].replyToken, {
+      await lineClient.replyMessage(replyToken, {
         type: 'text',
         text: '残したい伝言を音声メッセージで送ってね！',
       });
 
+      logger.info('[END]handler');
       return {
         statusCode: 200,
       };
-    } catch (e) {
-      logger.error(JSON.stringify(e));
+    } catch (err) {
+      logger.error(JSON.stringify(err));
       return {
         statusCode: 500,
-        body: {
+        body: JSON.stringify({
           message: 'internal server error',
-        },
+        }),
       };
     }
   },
 
-  async buildLineClient() {
+  buildLineClient() {
+    logger.info('[START]buildLineClient');
     if (!lineClient) {
+      logger.debug('LINEクライアントのインスタンスを生成');
       lineClient = new line.Client({
         channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
         channelSecret: process.env.CHANNEL_SECRET,
       });
     }
+    logger.info('[END]buildLineClient');
     return lineClient;
   },
 };
