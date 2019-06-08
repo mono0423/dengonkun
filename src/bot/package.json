@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@line/bot-sdk": "^6.4.0",
+    "@line/bot-sdk": "^6.7.1",
     "aws-sdk": "^2.368.0",
     "crypto": "^1.0.1",
     "log4js": "^3.0.6",
