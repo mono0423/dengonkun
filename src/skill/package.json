@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "@line/bot-sdk": "^6.7.1",
+    "@line/bot-sdk": "^6.8.2",
     "@line/clova-cek-sdk-nodejs": "^1.1.0",
     "aws-sdk": "^2.335.0"
   },
